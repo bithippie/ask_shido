@@ -1,0 +1,32 @@
+name: CI/CD
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - id: auth
+      uses: google-github-actions/auth@v0
+      with:
+        credentials_json: '${{ secrets.GCP_CREDS }}'
+
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-cloud-functions@v0'
+      with:
+        name: 'slack'
+        runtime: 'nodejs16'
+        entry_point: 'slack'
+        env_vars: 
+          SLACK_BOT_TOKEN=${{secrets.SLACK_BOT_TOKEN}},
+          SLACK_SIGNING_SECRET=${{secrets.SLACK_SIGNING_SECRET}},
+          APP_TOKEN=${{secrets.APP_TOKEN}},
+          AIRTABLE_API_KEY=${{secrets.AIRTABLE_API_KEY}}
+        min_instances: 0
+        max_instances: 2
+        https_trigger_security_level: "secure_always"
