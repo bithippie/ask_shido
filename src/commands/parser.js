@@ -1,14 +1,23 @@
-export function parseCommand({user_id, text}) {
-    let action = 'usage';
-    
-    let [ userAction, ...body ] = text.trim().split(/\s+/);
-    
-    userAction = userAction.replace(/[^a-zA-Z]+$/g, '');
+export function parseAppMention({text}) {
+    const usage = { action: 'usage' }
+    const sanitizedText = text
+        .replace(/^Reminder:/, '')  // remove slackbot reminder prefix
+        .replace(/<@.+>/,'')        // remove any at mentions
+        .trim()
 
-    if (['ask', 'pose'].includes(userAction)) {
-        action = userAction
-        body = body.join(' ');
+    // assume the first word is the action everything else gets pushed to the body
+    const [ action, ...rest ] = sanitizedText.split(/\s+/);
+    
+    // these are the only two commands we support right now
+    if (['ask', 'pose'].includes(action)) {
+        const body = rest.join(' ').trim();
+        
+        if (action == 'pose' && !body) {
+            return usage
+        }
+        
+        return { action, body }
     }
     
-    return { action, body, caller_id : user_id }
+    return usage
 }

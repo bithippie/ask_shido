@@ -1,47 +1,50 @@
 import 'dotenv/config';
-
 import bolt from '@slack/bolt';
-const {App, ExpressReceiver, LogLevel} = bolt;
-
 import { http } from '@google-cloud/functions-framework';
 
-
-import { parseCommand } from './src/commands/parser.js';
+import { parseAppMention } from './src/commands/parser.js';
 import AirtableService from './src/services/airtable.js';
+
+const {App, ExpressReceiver, LogLevel} = bolt;
 
 const expressReceiver = new ExpressReceiver({
     endpoints: '/events',
     signingSecret: process.env.SLACK_SIGNING_SECRET,
-    processBeforeResponse: true,
-    logLevel: process.env.LOG_LEVEL || LogLevel.DEBUG,
+    processBeforeResponse: true
 });
 
+const USE_SOCKET_MODE = (process.env.SOCKET_MODE.toLowerCase() === "true")
+
 const app = new App({
-  receiver: expressReceiver,
+  receiver: USE_SOCKET_MODE ? undefined : expressReceiver,
   token: process.env.SLACK_BOT_TOKEN,
   appToken: process.env.SLACK_APP_TOKEN,
-  socketMode: process.env.SOCKET_MODE === "true",
+  socketMode: USE_SOCKET_MODE,
+  logLevel: process.env.LOG_LEVEL || LogLevel.DEBUG,
   port: process.env.port || 3000
 });
 
 const airtableService = new AirtableService()
 
 /**
- * Entrypoint into the command parser
-*/
+ * Shido was mentioned
+ * Use the command parser to look at the context around the mention and
+ * determine the best course of action.
+ */
 app.event('app_mention', async ({ event, message, client, logger }) => {  
-    logger.info('app_mentioned')
-    
     const {
       thread_ts,
       ts,
       channel, 
       text, 
-      user:responder
+      user
     } = event
+    logger.info(`app_mention event fired`)
+  
     logger.debug('event', event)
     logger.debug('message', message)
-    const sanitizedText = text.replace(/^(Reminder:)?\s*?<@.+>/g, '').trim()
+    
+    const sanitizedText = text.replace(/^(Reminder:)?\s*?<@.+?>/g, '').trim()
     logger.debug('sanitizedText', sanitizedText)
 
     if (thread_ts) {
@@ -51,12 +54,12 @@ app.event('app_mention', async ({ event, message, client, logger }) => {
 
       const ask = await airtableService.fetchAsk({ts: thread_ts, channel})
       logger.debug(`Ask ${ask ? '' : 'Not'} Found`)
-      return airtableService.recordResponse({ts, response: sanitizedText, responder, ask})
+      return airtableService.recordResponse({ts, response: sanitizedText, responder: user, ask})
     }
     
-    const { action, body, caller_id } = parseCommand({text: sanitizedText, user_id: responder});
+    const { action, body } = parseAppMention({text: sanitizedText});
 
-    await processCommand({action, body, caller_id, channel, client})
+    await processCommand({action, body, caller_id: user, channel, client})
 });
 
 async function processCommand({action, body, caller_id, channel, client}) {
@@ -102,4 +105,11 @@ app.event('reaction_added', async ({ event, logger }) => {
     await airtableService.recordReaction({ channel, ts, reaction, reactor })
 });
 
-http('slack', expressReceiver.app)
+if (USE_SOCKET_MODE) {
+  (async () => {
+    await app.start();
+    console.log('⚡️ Bolt app started');
+  })();
+} else {
+  http('slack', expressReceiver.app)
+}
