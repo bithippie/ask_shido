@@ -5,6 +5,7 @@
     "description": "A bot to make you think.",
     "scripts": {
         "start": "node index.js",
+        "start:watch": "nodemon --exec 'npm start'",
         "test": "mocha --require esm --reporter spec src/**/*.test.js",
         "test:watch": "nodemon --exec 'npm test'",
         "ff": "npx @google-cloud/functions-framework --port=3000 --target=slack"
