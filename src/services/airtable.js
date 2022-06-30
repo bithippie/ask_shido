@@ -1,6 +1,6 @@
 import {default as Airtable} from 'airtable';
 
-export default class AirtableService {
+export class AirtableService {
     static QUESTION_BASE_ID = 'appIAF3Iz0JPTmlOX';
     
     constructor() {

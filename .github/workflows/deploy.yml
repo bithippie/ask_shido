@@ -27,6 +27,6 @@ jobs:
           SLACK_SIGNING_SECRET=${{secrets.SLACK_SIGNING_SECRET}},
           APP_TOKEN=${{secrets.APP_TOKEN}},
           AIRTABLE_API_KEY=${{secrets.AIRTABLE_API_KEY}}
-        min_instances: 0
+        min_instances: 1
         max_instances: 2
         https_trigger_security_level: "secure_always"

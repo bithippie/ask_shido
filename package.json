@@ -5,19 +5,25 @@
     "description": "A bot to make you think.",
     "scripts": {
         "start": "node index.js",
-        "ff":"npx @google-cloud/functions-framework --port=3000 --target=slack"
+        "start:watch": "nodemon --exec 'npm start'",
+        "test": "mocha --require esm --reporter spec src/**/*.test.js",
+        "test:watch": "nodemon --exec 'npm test'",
+        "ff": "npx @google-cloud/functions-framework --port=3000 --target=slack"
     },
     "author": "BitHippie, LLC",
     "license": "MIT",
     "dependencies": {
         "@google-cloud/functions-framework": "^3.1.1",
-        "@slack/events-api": "^3.0.1",
         "@slack/bolt": "^3.11.1",
+        "@slack/events-api": "^3.0.1",
         "airtable": "^0.11.3",
         "dotenv": "^16.0.1"
     },
     "devDependencies": {
         "@google-cloud/deploy": "^1.0.0",
-        "nodemon": "^2.0.16"
+        "esm": "^3.2.25",
+        "mocha": "^10.0.0",
+        "nodemon": "^2.0.18",
+        "sinon": "^14.0.0"
     }
 }
