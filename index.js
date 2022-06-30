@@ -1,12 +1,16 @@
 import 'dotenv/config';
 import bolt from '@slack/bolt';
+import { ConsoleLogger, LogLevel } from '@slack/logger';
 import { http } from '@google-cloud/functions-framework';
 
 import { parseAppMention } from './src/commands/parser.js';
 import { CommandHandlerRegistry } from './src/commands/handlers.js';
 import { AirtableService } from './src/services/airtable.js';
 
-const { App, ExpressReceiver, LogLevel } = bolt;
+const { App, ExpressReceiver } = bolt;
+const logger = new ConsoleLogger()
+
+const USE_SOCKET_MODE = (process.env.SOCKET_MODE.toLowerCase() === "true")
 
 const expressReceiver = new ExpressReceiver({
     endpoints: '/events',
@@ -14,14 +18,12 @@ const expressReceiver = new ExpressReceiver({
     processBeforeResponse: true
 });
 
-const USE_SOCKET_MODE = (process.env.SOCKET_MODE.toLowerCase() === "true")
-
 const app = new App({
-  receiver: USE_SOCKET_MODE ? undefined : expressReceiver,
+  receiver: expressReceiver,
   token: process.env.SLACK_BOT_TOKEN,
   appToken: process.env.SLACK_APP_TOKEN,
   socketMode: USE_SOCKET_MODE,
-  logLevel: process.env.LOG_LEVEL || LogLevel.DEBUG,
+  logLevel: process.env.LOG_LEVEL || LogLevel.INFO,
   port: process.env.port || 3000
 });
 
@@ -60,6 +62,7 @@ app.event('reaction_added', async ({ event, logger }) => {
     await airtableService.recordReaction({ channel, ts, reaction, reactor })
 });
 
+logger.info('use_socket_mode', USE_SOCKET_MODE)
 if (USE_SOCKET_MODE) {
   (async () => {
     await app.start();
