@@ -19,7 +19,8 @@ const expressReceiver = new ExpressReceiver({
 });
 
 const app = new App({
-  receiver: expressReceiver,
+  // You cannot supply a custom receiver when socketMode is set to true.
+  receiver: USE_SOCKET_MODE ?  undefined : expressReceiver,
   token: process.env.SLACK_BOT_TOKEN,
   appToken: process.env.SLACK_APP_TOKEN,
   socketMode: USE_SOCKET_MODE,
@@ -62,12 +63,12 @@ app.event('reaction_added', async ({ event, logger }) => {
     await airtableService.recordReaction({ channel, ts, reaction, reactor })
 });
 
-logger.info('use_socket_mode', USE_SOCKET_MODE)
 if (USE_SOCKET_MODE) {
   (async () => {
     await app.start();
-    console.log('⚡️ Bolt app started');
+    logger.info('⚡️ Bolt app started using socket mode');
   })();
 } else {
-  http('slack', expressReceiver.app)
+  http('slack', expressReceiver.app);
+  logger.info('⚡️ Bolt app started using Request URL');
 }
