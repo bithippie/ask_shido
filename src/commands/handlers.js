@@ -11,7 +11,7 @@ export const CommandHandlerRegistry = Object.freeze({
 /**
  * Prints Shido usage instructions in the channel that mentioned @Shido.
  */
-export async function printUsage({client, event}) {
+export async function printUsage({client, event, logger}) {
     logger.info('executing printUsage handler')
 
     const { channel } = event;
@@ -27,7 +27,7 @@ export async function printUsage({client, event}) {
  * Pulls a question for the Airtable Service and prints it to the channel
  * where `@Shido ask` was mentioned.
  */
-export async function printAsk({airtableService, client, event}) {
+export async function printAsk({airtableService, client, event, logger}) {
     logger.info('executing printAsk handler')
 
     const { channel } = event;
@@ -50,7 +50,7 @@ export async function printAsk({airtableService, client, event}) {
 /**
  * When a user poses a question, store it in the question table.
  */
-export async function captureQuestion({airtableService, body, client, event}) {
+export async function captureQuestion({airtableService, body, client, event, logger}) {
     logger.info('executing captureQuestion handler')
     
     const { channel, user } = event;
@@ -72,6 +72,8 @@ export async function captureAnswer({airtableService, body, event, logger}) {
     
     const { channel, thread_ts, ts, user } = event
     
+    // fetch the parent ask using thread_ts
+    // we need the airtable's record id from the ask to join the answer to the ask.
     const ask = await airtableService.fetchAsk({ts: thread_ts, channel})
     
     logger.info(`Ask ${ask ? '' : 'Not'} Found`)

@@ -4,7 +4,7 @@ import { http } from '@google-cloud/functions-framework';
 
 import { parseAppMention } from './src/commands/parser.js';
 import { CommandHandlerRegistry } from './src/commands/handlers.js';
-import AirtableService from './src/services/airtable.js';
+import { AirtableService } from './src/services/airtable.js';
 
 const { App, ExpressReceiver, LogLevel } = bolt;
 
@@ -36,7 +36,7 @@ const airtableService = new AirtableService()
  * proxy action, body, and the slack event objects to the CommandHandlerRegistry.
  */
 app.event('app_mention', async ({ client, event, logger }) => {  
-  logger.info(`app_mention event fired`)  
+  logger.info(`app_mention event fired`)
   logger.debug('event', event)
 
   const { action, body } = parseAppMention(event);
@@ -52,7 +52,8 @@ app.event('app_mention', async ({ client, event, logger }) => {
  * Record when someone reacts to an Ask.
  */
 app.event('reaction_added', async ({ event, logger }) => {  
-    logger.info('reaction_added')
+    logger.info('reaction_added event fired')
+    logger.debug('event', event)
     
     const { item: { channel, ts }, reaction, user: reactor } = event
     
