@@ -1,6 +1,6 @@
 import assert from 'assert';
 import sinon from 'sinon';
-import { ConsoleLogger } from '@slack/logger';
+import { ConsoleLogger, LogLevel } from '@slack/logger';
 
 import { printUsage, printAsk, captureQuestion, captureAnswer } from './handlers.js';
 import { AirtableService } from '../services/airtable.js';
@@ -8,6 +8,7 @@ import { AirtableService } from '../services/airtable.js';
 describe('app_mention event command handlers', () => {
     // inject bolt's logger
     const logger = new ConsoleLogger();
+    logger.setLevel(LogLevel.ERROR) // we don't actually need to see any errors in the test output.
     
     // mock command event
     const appMentionEvent = Object.freeze({
@@ -21,8 +22,8 @@ describe('app_mention event command handlers', () => {
         ts: 1656537008.380709
     });
 
+    // stubbed in beforeEach
     let airtableService;
-    let fake;
     let client;
 
     beforeEach(() => {
@@ -50,14 +51,20 @@ describe('app_mention event command handlers', () => {
     })
 
     describe('printUsage', () => {
+        let postMessageFake;
+        
+        beforeEach(() => {
+            postMessageFake = client.chat.postMessage
+        });
+
         it('call client.chat.postMessage once with usage text', async () => {
-            fake = client.chat.postMessage
+            postMessageFake = client.chat.postMessage
             
             await printUsage({ client, event: appMentionEvent, logger})
             
             assert.equal(client.chat.postMessage.callCount, 1)
             
-            const {channel, response_type, text} = fake.firstCall.firstArg;
+            const {channel, response_type, text} = postMessageFake.firstCall.firstArg;
             
             assert.equal(channel, appMentionEvent.channel)
             assert.equal(response_type, "in_channel")
@@ -153,15 +160,15 @@ describe('app_mention event command handlers', () => {
             ...appMentionEvent
         }
         
-        beforeEach(async () => {
+        beforeEach(() => {
             fetchAskFake = airtableService.fetchAsk;
             recordResponseFake = airtableService.recordResponse;
             body = 'My Answer To The Question';
-
-            await captureAnswer({airtableService, body, event: threadedAppMentionEvent, logger})
         });
         
-        it ('calls airtableServices.fetchAsk once with expected args', () => {
+        it ('calls airtableServices.fetchAsk once with expected args', async () => {
+            await captureAnswer({airtableService, body, event: threadedAppMentionEvent, logger})
+
             assert.equal(fetchAskFake.callCount, 1)
 
             // confirm we are sending the right question, and creator
@@ -171,7 +178,9 @@ describe('app_mention event command handlers', () => {
             assert.equal(ts, threadedAppMentionEvent.thread_ts)
         });
 
-        it ('calls airtableServices.recordResponse once with expected args', () => {
+        it ('calls airtableServices.recordResponse once with expected args', async () => {
+            await captureAnswer({airtableService, body, event: threadedAppMentionEvent, logger})
+
             assert.equal(recordResponseFake.callCount, 1)
             
             // confirm we are sending the right answer, and answerer
@@ -182,8 +191,23 @@ describe('app_mention event command handlers', () => {
             assert.equal(responder, threadedAppMentionEvent.user)
             assert.equal(ask, fetchAskFake.firstCall.returnValue)
         });
-        it ('does not call recordResponse when the parent ask can\'t be found')
-        it ('raises an error if the event.thread_ts is undefined')
-        it ('raises an error if thread_ts doesn\'t match an ask')
+
+        it ('does not call recordResponse when the parent ask can\'t be found', async () => {
+            // null out the return from the fake configured in beforeEach 
+            fetchAskFake.returns(undefined)
+            
+            await captureAnswer({airtableService, body, event: threadedAppMentionEvent, logger})
+
+            assert.equal(recordResponseFake.callCount, 0)
+        });
+
+        it ('raises an error if the event.thread_ts is undefined', async () => {
+            // appMentionEvent doesn't include a thread_ts in contrast to threadAppMentionEvent
+            await captureAnswer({airtableService, body, event: appMentionEvent, logger})
+
+            assert.equal(fetchAskFake.callCount, 0)
+            assert.equal(recordResponseFake.callCount, 0)
+        });
+
     });
 });

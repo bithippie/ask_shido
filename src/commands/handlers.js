@@ -1,6 +1,10 @@
 
 import { Actions } from './parser.js';
 
+/**
+ * Map actions to event handlers
+ * This is very similar to how a express router works
+ */
 export const CommandHandlerRegistry = Object.freeze({
   [Actions.USAGE]: printUsage,
   [Actions.ASK]: printAsk,
@@ -72,11 +76,23 @@ export async function captureAnswer({airtableService, body, event, logger}) {
     
     const { channel, thread_ts, ts, user } = event
     
+    // the command parser uses thread_ts to determine the `action`
+    // thread_ts is a requirement for the `capture_answer` so this
+    // shouldn't happen, but if it does, be defensive.
+    if (!thread_ts) {
+      logger.warn('In captureAnswer handler without a thread_ts!')
+      return
+    }
+    
     // fetch the parent ask using thread_ts
     // we need the airtable's record id from the ask to join the answer to the ask.
     const ask = await airtableService.fetchAsk({ts: thread_ts, channel})
     
-    logger.info(`Ask ${ask ? '' : 'Not'} Found`)
+    if (!ask) {
+      logger.info(`No Ask found for ts: ${thread_ts}, channel: ${channel}`)
+      // TODO: bot could postMessage that answer went unhandled.
+      return
+    }
     
     return airtableService.recordResponse({ts, response: body, responder: user, ask})
 }
