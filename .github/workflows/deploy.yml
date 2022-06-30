@@ -26,8 +26,8 @@ jobs:
           SLACK_BOT_TOKEN=${{secrets.SLACK_BOT_TOKEN}},
           SLACK_SIGNING_SECRET=${{secrets.SLACK_SIGNING_SECRET}},
           APP_TOKEN=${{secrets.APP_TOKEN}},
-          AIRTABLE_API_KEY=${{secrets.AIRTABLE_API_KEY}}
-          SOCKET_MODE=false
+          AIRTABLE_API_KEY=${{secrets.AIRTABLE_API_KEY}},
+          SOCKET_MODE=false,
           LOG_LEVEL=debug
         min_instances: 1
         max_instances: 2
