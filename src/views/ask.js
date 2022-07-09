@@ -1,4 +1,4 @@
-export const CONTEXT = "*Important:* Replies must start with `@Shido` and be within this thread."
+export const CONTEXT = "*Important:* Replies must start with `@Shido` and be within this thread to be saved."
 
 /**
  * Takes a questionORM object and returns an slack formatted `ask` message.
