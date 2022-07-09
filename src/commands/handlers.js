@@ -73,7 +73,7 @@ export async function captureQuestion({airtableService, body, client, event, log
 /**
  * When a user replies to a question, store it in the answers table.
  */
-export async function captureAnswer({airtableService, body, event, logger}) {
+export async function captureAnswer({airtableService, body, client, event, logger}) {
     logger.info('executing captureAnswer handler')
     
     const { channel, thread_ts, ts, user } = event
@@ -96,5 +96,11 @@ export async function captureAnswer({airtableService, body, event, logger}) {
       return
     }
     
-    return airtableService.recordResponse({ts, response: body, responder: user, ask})
+    await airtableService.recordResponse({ts, response: body, responder: user, ask})
+
+    return client.reactions.add({
+      channel,
+      timestamp: ts,
+      name: "white_check_mark"
+    })
 }
