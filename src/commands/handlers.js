@@ -1,6 +1,6 @@
 
 import { Actions } from './parser.js';
-
+import { generateAskMessage } from '../views/ask.js';
 /**
  * Map actions to event handlers
  * This is very similar to how a express router works
@@ -41,7 +41,7 @@ export async function printAsk({airtableService, client, event, logger}) {
     const postResponse = await client.chat.postMessage({
       channel,
       response_type: "in_channel", 
-      text: questionORM.question
+      blocks: generateAskMessage(questionORM)
     })
     
     const {ts} = postResponse
