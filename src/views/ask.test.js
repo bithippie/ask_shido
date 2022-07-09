@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { generateAskMessage, IMPORTANT_CONTEXT } from "./ask.js";
+import { generateAskMessage, CONTEXT } from "./ask.js";
 
 describe('generateAskMessage', () => {
     const questionORM = Object.freeze({
@@ -9,10 +9,10 @@ describe('generateAskMessage', () => {
     });
     
     it('should substitute the questionORM.question into the message', () => {
-        const [header, question, context] = generateAskMessage(questionORM)
+        const [header, question, like, context] = generateAskMessage({questionORM})
         assert.equal(header.type, 'header')
         // weird quirk of Slacks`section` block is the double text
         assert(question.text.text.endsWith(questionORM.question))
-        assert.equal(context.elements[0].text, IMPORTANT_CONTEXT)
+        assert.equal(context.elements[0].text, CONTEXT)
     })
 });

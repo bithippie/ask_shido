@@ -1,6 +1,8 @@
 
 import { Actions } from './parser.js';
 import { generateAskMessage } from '../views/ask.js';
+import { generateUsageMessage } from '../views/usage.js';
+import { generatePoseResponseMessage } from '../views/pose.js';
 /**
  * Map actions to event handlers
  * This is very similar to how a express router works
@@ -23,7 +25,7 @@ export async function printUsage({client, event, logger}) {
     await client.chat.postMessage({
       channel,
       response_type: "in_channel",
-      text: "Usage: `@Shido ask` or `@Shido pose <your question>`"
+      blocks: generateUsageMessage()
     });
 }
 
@@ -41,7 +43,7 @@ export async function printAsk({airtableService, client, event, logger}) {
     const postResponse = await client.chat.postMessage({
       channel,
       response_type: "in_channel", 
-      blocks: generateAskMessage(questionORM)
+      blocks: generateAskMessage({questionORM})
     })
     
     const {ts} = postResponse
@@ -57,14 +59,14 @@ export async function printAsk({airtableService, client, event, logger}) {
 export async function captureQuestion({airtableService, body, client, event, logger}) {
     logger.info('executing captureQuestion handler')
     
-    const { channel, user } = event;
+    const { channel, user: creator } = event;
     
-    await airtableService.poseQuestion({question: body, creator: user})
+    await airtableService.poseQuestion({question: body, creator})
     
     return client.chat.postMessage({
       channel,
       response_type: "in_channel", 
-      text: "Hm...:thinking_face: That's a great question!"
+      blocks: generatePoseResponseMessage({creator})
     })
 }
 

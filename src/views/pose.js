@@ -1,18 +1,15 @@
-export const CONTEXT = "*Important:* Replies must start with `@Shido` and be within this thread."
+export const CONTEXT = "Think you can help? No need to wait for `@Shido`! Reply in the thread."
 
 /**
  * Takes a questionORM object and returns an slack formatted `ask` message.
  */
-export function generateAskMessage({questionORM}) {
-    
-    const { question } = questionORM
-
+export function generatePoseResponseMessage({creator}) {
     return [
         {
             "type": "header",
             "text": {
                 "type": "plain_text",
-                "text": "Question :thought_balloon:",
+                "text": "Question Added! :pencil:",
                 "emoji": true
             }
         },
@@ -20,14 +17,14 @@ export function generateAskMessage({questionORM}) {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": `>${question}`
+                "text": `:thinking_face: That's a great question, <@${creator}>!`
             }
         },
         {
             "type": "section",
             "text": {
                 "type": "plain_text",
-                "text": "If you enjoy this question or discussion, give it a :+1:",
+                "text": "Thank you for adding your question to the list.",
                 "emoji": true
             }
         },
@@ -42,3 +39,4 @@ export function generateAskMessage({questionORM}) {
         }
     ]
 } 
+
