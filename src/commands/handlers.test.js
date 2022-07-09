@@ -64,11 +64,11 @@ describe('app_mention event command handlers', () => {
             
             assert.equal(client.chat.postMessage.callCount, 1)
             
-            const {channel, response_type, text} = postMessageFake.firstCall.firstArg;
+            const {channel, response_type, blocks} = postMessageFake.firstCall.firstArg;
             
             assert.equal(channel, appMentionEvent.channel)
             assert.equal(response_type, "in_channel")
-            assert.match(text, /usage/i)
+            assert(blocks)
         });
     });
 
@@ -93,12 +93,12 @@ describe('app_mention event command handlers', () => {
             assert.equal(postMessageFake.callCount, 1)
             
             // confirm we are sending the right channel, response_type, and text
-            const { channel, response_type, text } = postMessageFake.firstCall.firstArg;
+            const { channel, response_type, blocks } = postMessageFake.firstCall.firstArg;
             const selectedQuestionORM = selectQuestionFake.firstCall.returnValue
             
             assert.equal(channel, appMentionEvent.channel)
             assert.equal(response_type, "in_channel")
-            assert.equal(text, selectedQuestionORM.question)
+            assert(blocks)
         });
 
         it('calls airtableService.captureAsk once with expected args', () => {
@@ -140,11 +140,11 @@ describe('app_mention event command handlers', () => {
             assert.equal(postMessageFake.callCount, 1)
             
             // confirm we are sending the right question, and creator
-            const { channel, response_type, text } = postMessageFake.firstCall.firstArg
+            const { channel, response_type, blocks } = postMessageFake.firstCall.firstArg
             
             assert.equal(channel, appMentionEvent.channel)
             assert.equal(response_type, "in_channel")
-            assert.match(text, /great question/i)
+            assert(blocks)
         });
     });
 
