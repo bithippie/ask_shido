@@ -46,6 +46,9 @@ describe('app_mention event command handlers', () => {
         client = { 
             chat: {
                 postMessage: sinon.fake.resolves(postMessageResponse)
+            },
+            reactions: {
+                add: sinon.fake.resolves()
             }
         };
     })
@@ -167,7 +170,7 @@ describe('app_mention event command handlers', () => {
         });
         
         it ('calls airtableServices.fetchAsk once with expected args', async () => {
-            await captureAnswer({airtableService, body, event: threadedAppMentionEvent, logger})
+            await captureAnswer({airtableService, body, client, event: threadedAppMentionEvent, logger})
 
             assert.equal(fetchAskFake.callCount, 1)
 
@@ -179,7 +182,7 @@ describe('app_mention event command handlers', () => {
         });
 
         it ('calls airtableServices.recordResponse once with expected args', async () => {
-            await captureAnswer({airtableService, body, event: threadedAppMentionEvent, logger})
+            await captureAnswer({airtableService, body, client, event: threadedAppMentionEvent, logger})
 
             assert.equal(recordResponseFake.callCount, 1)
             
@@ -192,18 +195,32 @@ describe('app_mention event command handlers', () => {
             assert.equal(ask, fetchAskFake.firstCall.returnValue)
         });
 
+        it ('calls client.reactions.add once with expected args', async () => {
+            const reactionsAddFake = client.reactions.add
+            await captureAnswer({airtableService, body, client, event: threadedAppMentionEvent, logger})
+
+            assert.equal(reactionsAddFake.callCount, 1)
+            
+            // confirm we are sending the right answer, and answerer
+            const { timestamp, channel, name } = reactionsAddFake.firstCall.firstArg
+
+            assert.equal(channel, threadedAppMentionEvent.channel)
+            assert.equal(timestamp, threadedAppMentionEvent.ts)
+            assert(name)
+        });
+
         it ('does not call recordResponse when the parent ask can\'t be found', async () => {
             // null out the return from the fake configured in beforeEach 
             fetchAskFake.returns(undefined)
             
-            await captureAnswer({airtableService, body, event: threadedAppMentionEvent, logger})
+            await captureAnswer({airtableService, body, client, event: threadedAppMentionEvent, logger})
 
             assert.equal(recordResponseFake.callCount, 0)
         });
 
         it ('raises an error if the event.thread_ts is undefined', async () => {
             // appMentionEvent doesn't include a thread_ts in contrast to threadAppMentionEvent
-            await captureAnswer({airtableService, body, event: appMentionEvent, logger})
+            await captureAnswer({airtableService, body, client, event: appMentionEvent, logger})
 
             assert.equal(fetchAskFake.callCount, 0)
             assert.equal(recordResponseFake.callCount, 0)
